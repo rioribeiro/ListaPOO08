@@ -1,6 +1,7 @@
 package template;
 
 import io.javelit.core.Jt;
+import io.javelit.core.Server;
 import model.Equacao;
 import service.EquacaoService;
 import java.util.Map;
@@ -8,34 +9,38 @@ import java.util.Map;
 public class EquacaoUI {
 
     public static void main(String[] args) {
-        // Título e cabeçalho da aplicação
-        Jt.title("Calculadora de Equação do II Grau (Arquitetura 3 Camadas)");
-        Jt.markdown("### Modelo: $$y = ax^2 + bx + c$$");
-        Jt.markdown("---");
+        Server.builder(EquacaoUI::render, 8080).build().start();
+    }
 
-        // Entrada de dados na UI
-        double a = Jt.numberInput("Coeficiente 'a':", 1.0);
-        double b = Jt.numberInput("Coeficiente 'b':", 0.0);
-        double c = Jt.numberInput("Coeficiente 'c':", -4.0);
+    private static void render() {
+        Jt.title("Calculadora de Equação do II Grau").use();
+        Jt.markdown("### Modelo: $$y = ax^2 + bx + c$$").use();
+        Jt.markdown("---").use();
 
-        if (Jt.button("Calcular Equação")) {
+        Double a = Jt.numberInput("Coeficiente 'a':", Double.class).value(1.0).use();
+        Double b = Jt.numberInput("Coeficiente 'b':", Double.class).value(0.0).use();
+        Double c = Jt.numberInput("Coeficiente 'c':", Double.class).value(-4.0).use();
+
+        if (Jt.button("Calcular Equação").use()) {
+            if (a == null || b == null || c == null) {
+                Jt.error("Preencha todos os coeficientes.").use();
+                return;
+            }
             try {
-                // Chamada exclusiva à camada de Serviço (Service)
                 Equacao eq = EquacaoService.calcularEquacao(a, b, c);
 
-                Jt.subheader("Resultados:");
-                Jt.text("Equação: " + eq.toString());
-                Jt.text(String.format("Delta (Δ): %.2f", eq.delta()));
+                Jt.subheader("Resultados:").use();
+                Jt.text("Equação: " + eq).use();
+                Jt.text(String.format("Delta (Δ): %.2f", eq.delta())).use();
 
                 if (eq.temRaizesReais()) {
-                    Jt.success(String.format("x1 = %.4f", eq.x1()));
-                    Jt.success(String.format("x2 = %.4f", eq.x2()));
+                    Jt.success(String.format("x1 = %.2f", eq.x1())).use();
+                    Jt.success(String.format("x2 = %.2f", eq.x2())).use();
                 } else {
-                    Jt.warning("A equação não possui raízes reais (Δ < 0).");
+                    Jt.warning("A equação não possui raízes reais (Δ < 0).").use();
                 }
 
-                // Geração da tabela através da camada de Serviço
-                Jt.markdown("#### Tabela de Pontos da Parábola");
+                Jt.markdown("#### Tabela de Pontos da Parábola").use();
                 Map<Double, Double> pontos = EquacaoService.gerarTabelaPontos(eq, -5.0, 5.0, 1.0);
 
                 StringBuilder sb = new StringBuilder();
@@ -43,12 +48,12 @@ public class EquacaoUI {
                 for (Map.Entry<Double, Double> entry : pontos.entrySet()) {
                     sb.append(String.format("| %.1f | %.2f |\n", entry.getKey(), entry.getValue()));
                 }
-                Jt.markdown(sb.toString());
+                Jt.markdown(sb.toString()).use();
 
             } catch (IllegalArgumentException e) {
-                Jt.error("[ERRO DE VALIDAÇÃO]: " + e.getMessage());
+                Jt.error("[ERRO DE VALIDAÇÃO]: " + e.getMessage()).use();
             } catch (Exception e) {
-                Jt.error("[ERRO DE PROCESSAMENTO]: " + e.getMessage());
+                Jt.error("[ERRO DE PROCESSAMENTO]: " + e.getMessage()).use();
             }
         }
     }
